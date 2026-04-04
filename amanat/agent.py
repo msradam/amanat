@@ -317,26 +317,48 @@ REMEDIATION_TOOLS = {"revoke_sharing", "download_file", "delete_file"}
 
 
 def create_model() -> OpenAIModel:
-    """Create the Strands OpenAI model pointing at llama-server."""
+    """Create the Strands OpenAI model.
+
+    Supports local llama-server (model_id=granite4-micro) and
+    OpenRouter (model_id=ibm-granite/granite-4.0-h-micro).
+    Set GRANITE_MODEL_ID env var to override the model ID.
+    """
+    base_url = os.environ.get("OPENAI_API_BASE", "http://localhost:8080/v1")
+    # Auto-detect model ID based on provider
+    if "openrouter" in base_url:
+        default_model = "ibm-granite/granite-4.0-h-micro"
+    else:
+        default_model = "granite4-micro"
+    model_id = os.environ.get("GRANITE_MODEL_ID", default_model)
+
     return OpenAIModel(
         client_args={
-            "base_url": os.environ.get("OPENAI_API_BASE", "http://localhost:8080/v1"),
+            "base_url": base_url,
             "api_key": os.environ.get("OPENAI_API_KEY", "llama"),
         },
-        model_id="granite4-micro",
+        model_id=model_id,
         params={"max_tokens": 4096},
     )
 
 
 def create_agent(system_prompt: str | None = None, access_token: str | None = None,
-                 service_tokens: dict[str, str] | None = None) -> Agent:
-    """Create a Strands Agent configured for Amanat."""
+                 service_tokens: dict[str, str] | None = None,
+                 demo_tools: bool = False) -> Agent:
+    """Create a Strands Agent configured for Amanat.
+
+    If demo_tools=True and the LLM provider doesn't support tool calling
+    (e.g. OpenRouter), creates an agent without tools. The caller should
+    pre-execute tools and inject results into the system prompt.
+    """
     set_access_token(access_token, service_tokens)
+
+    base_url = os.environ.get("OPENAI_API_BASE", "")
+    provider_supports_tools = "openrouter" not in base_url
 
     return Agent(
         model=create_model(),
         system_prompt=system_prompt or SYSTEM_PROMPT,
-        tools=ALL_TOOLS,
+        tools=ALL_TOOLS if provider_supports_tools else [],
     )
 
 

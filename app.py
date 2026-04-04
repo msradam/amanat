@@ -660,9 +660,38 @@ async def on_message(message: cl.Message):
     # Build system prompt with RAG documents for policy questions
     system_prompt = _build_system_prompt(query)
 
+    # Check if provider supports tool calling
+    _provider_supports_tools = "openrouter" not in os.environ.get("OPENAI_API_BASE", "")
+
+    # If provider doesn't support tools (e.g. OpenRouter deployed demo),
+    # pre-execute relevant tools and inject results into the prompt
+    if not _provider_supports_tools and (DEMO_TOOLS or DEMO_MODE):
+        q_lower = query.lower()
+        tool_results = []
+        if any(w in q_lower for w in ("scan", "onedrive", "file", "check", "gbv", "biometric", "audit")):
+            tool_results.append(execute_tool("scan_files", {"service": "onedrive"}, access_token=None))
+        if any(w in q_lower for w in ("slack", "channel", "message")):
+            tool_results.append(execute_tool("search_messages", {"service": "slack", "query": "beneficiary OR case OR medical"}, access_token=None))
+        if any(w in q_lower for w in ("outlook", "email", "mail")):
+            tool_results.append(execute_tool("search_messages", {"service": "outlook", "query": "beneficiary OR case"}, access_token=None))
+        if any(w in q_lower for w in ("retention", "expired", "old")):
+            tool_results.append(execute_tool("retention_scan", {"service": "onedrive"}, access_token=None))
+        if any(w in q_lower for w in ("dpia", "impact assessment")):
+            tool_results.append(execute_tool("generate_dpia", {"activity": "humanitarian data processing", "data_types": "personal_identifier,special_category_data,biometric_data", "purpose": "beneficiary assistance"}, access_token=None))
+        if any(w in q_lower for w in ("consent", "compliant")):
+            tool_results.append(execute_tool("check_consent", {"file_id": "doc-001", "service": "onedrive"}, access_token=None))
+
+        if tool_results:
+            # Strip JSON, truncate, inject into prompt
+            results_text = "\n\n".join(
+                r.split("\n---JSON---")[0][:2000] if "---JSON---" in r else r[:2000]
+                for r in tool_results
+            )
+            system_prompt += f"\n\nTool results from scanning the user's services:\n\n{results_text}\n\nAnalyze these results and respond to the user's query."
+
     # Create Strands agent
     agent = create_agent(system_prompt=system_prompt, access_token=access_token,
-                         service_tokens=_service_tokens)
+                         service_tokens=_service_tokens, demo_tools=DEMO_TOOLS)
 
     # TaskList for live progress
     task_list = cl.TaskList()
