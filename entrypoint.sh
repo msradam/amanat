@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Download model if not already cached in volume
+# Download model if not cached
 if [ ! -f "$MODEL_PATH" ]; then
     echo "Downloading Granite 4 Micro GGUF..."
     mkdir -p /data
@@ -9,7 +9,7 @@ if [ ! -f "$MODEL_PATH" ]; then
     echo "Download complete."
 fi
 
-# Start llama-server
+# Start llama-server in background
 llama-server \
     --model "$MODEL_PATH" \
     --port 8080 \
@@ -26,7 +26,7 @@ for i in $(seq 1 120); do
     sleep 2
 done
 
-export OPENAI_API_BASE=http://localhost:8080/v1
-export OPENAI_API_KEY=llama
-
-exec uv run chainlit run app.py --host 0.0.0.0 --port ${PORT:-8000}
+# Run chainlit
+OPENAI_API_BASE=http://localhost:8080/v1 \
+OPENAI_API_KEY=llama \
+chainlit run app.py --host 0.0.0.0 --port ${PORT:-8000}
