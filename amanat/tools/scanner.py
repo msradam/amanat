@@ -281,7 +281,7 @@ def redact_pii_in_text(text: str) -> tuple[str, list[dict]]:
 DEMO_FILES = [
     {
         "id": "doc-001",
-        "name": "Cataclysm_Displaced_Registry_2026.xlsx",
+        "name": "Cataclysm_Displaced_Registry_2026.csv",
         "type": "spreadsheet",
         "size": "2.4 MB",
         "owner": "maryam@wra-waqwaq.org",
@@ -315,7 +315,7 @@ DEMO_FILES = [
     },
     {
         "id": "doc-002",
-        "name": "Donor_Report_Q1_2026.docx",
+        "name": "Donor_Report_Q1_2026.txt",
         "type": "document",
         "size": "890 KB",
         "owner": "farah@wra-waqwaq.org",

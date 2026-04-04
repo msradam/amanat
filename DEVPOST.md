@@ -45,7 +45,7 @@ Amanat is an AI agent that connects to an NGO's cloud services via Auth0 Token V
 
 ### Tools
 
-13 functions the agent can call:
+14 functions the agent can call:
 
 | Tool | Purpose | Example Query |
 |------|---------|---------------|
@@ -61,6 +61,7 @@ Amanat is an AI agent that connects to an NGO's cloud services via Auth0 Token V
 | `generate_dpia` | Generate Data Protection Impact Assessment | "DPIA for our biometric enrollment" |
 | `check_consent` | Verify consent documentation | "Is our consent compliant?" |
 | `notify_channel` | Post data protection alert to Slack | "Warn the team about the PII leak" |
+| `send_email` | Send data protection alert email | "Email the sender about the violation" |
 | `parse_document` | OCR and scan uploaded documents | *Drag-and-drop a scanned PDF* |
 
 ### Demo Scenario
@@ -104,7 +105,7 @@ Per-service scoping:
 | Service | Connection | Scopes |
 |---------|-----------|--------|
 | OneDrive | `microsoft-graph` | `Files.Read`, `Files.ReadWrite`, `offline_access` |
-| Outlook | `microsoft-graph` | `Mail.Read`, `offline_access` |
+| Outlook | `microsoft-graph` | `Mail.Read`, `Mail.Send`, `offline_access` |
 | Slack (read) | `sign-in-with-slack` | `channels:read`, `channels:history`, `search:read` |
 | Slack (write) | Bot token | `chat:write` (separate credential, posts as "Amanat") |
 
@@ -241,7 +242,7 @@ Solution: separate read and write credentials. Token Vault handles read operatio
 
 **Research-backed PII detection.** The hybrid detection architecture is grounded in the RECAP paper (2025), which demonstrated that combining regex with LLM-based extraction outperforms either approach alone. Our implementation catches implicit identifiers like "the 15-year-old girl in Vakwa Shelter" that regex cannot detect.
 
-**49/50 agent queries pass.** Tested 50 diverse queries across 5 categories: scan (15/15), policy/RAG (10/10), compliance (8/8), remediation (6/7), edge cases (10/10). One failure from a context window overflow on a multi-file remediation. 32 unit tests pass.
+**49/50 agent queries pass.** Tested 50 diverse queries across 5 categories: scan (15/15), policy/RAG (10/10), compliance (8/8), remediation (6/7), edge cases (10/10). One failure from a context window overflow on a multi-file remediation. 43 unit tests pass.
 
 ## What We Learned
 
