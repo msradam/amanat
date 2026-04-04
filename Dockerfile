@@ -11,7 +11,7 @@ RUN git clone --depth 1 https://github.com/ggerganov/llama.cpp /llama.cpp && \
 FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    curl ca-certificates libgomp1 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=llama-builder /llama.cpp/build/bin/llama-server /usr/local/bin/llama-server
 
