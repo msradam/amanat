@@ -1,5 +1,4 @@
-#!/bin/bash
-set -e
+#!/bin/sh
 
 # Download model if not cached
 if [ ! -f "$MODEL_PATH" ]; then
@@ -18,15 +17,16 @@ llama-server \
     --parallel 1 &
 
 echo "Waiting for llama-server..."
-for i in $(seq 1 120); do
+i=0
+while [ $i -lt 120 ]; do
     if curl -s http://localhost:8080/health > /dev/null 2>&1; then
         echo "llama-server ready"
         break
     fi
     sleep 2
+    i=$((i + 1))
 done
 
-# Run chainlit
-OPENAI_API_BASE=http://localhost:8080/v1 \
-OPENAI_API_KEY=llama \
-chainlit run app.py --host 0.0.0.0 --port ${PORT:-8000}
+# Run chainlit with env vars inline
+OPENAI_API_BASE=http://localhost:8080/v1 OPENAI_API_KEY=llama \
+    chainlit run app.py --host 0.0.0.0 --port ${PORT:-8000}
