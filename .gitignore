@@ -23,11 +23,16 @@ uv.lock
 # Dev workspace
 assets/editing/
 assets/amanat_submission.mp4
+assets/slides*
+assets/banners/
+assets.0*
 logo_tests/
 research/
 test_results_50.jsonl
 test_results_50_summary.txt
 accountability-icon-*.png
+video_description.md
+.pytest_cache/
 
 # Large files
 *.gguf
