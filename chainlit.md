@@ -1,5 +1,5 @@
 # amanat
 
-Data governance AI agent for humanitarian organizations.
+Privacy-first data governance agent for humanitarian organizations. Scan files, messages, and emails for sensitive data exposure, then remediate with one click.
 
-Click **Connect services** below to link your OneDrive, Outlook, or Slack accounts. Each service is connected separately with its own permissions.
+Select a starter below to begin, or type your own query.

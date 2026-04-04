@@ -81,7 +81,7 @@ Demo files across OneDrive (`/WRA Operations/`):
 | `/Donor Relations/` | Donor report | Cross-references beneficiary case IDs |
 | `/Scanned Documents/` | Registration form (image-only PDF) | Requires Docling OCR to extract PII |
 
-## How We Built It
+## How I Built It
 
 ### Auth0 Integration
 
@@ -162,9 +162,9 @@ Example: the query "Can we share biometric data with host governments?" retrieve
 
 ### IBM Granite 4 Micro
 
-Granite 4.0 Micro is a 3B-parameter hybrid Mamba-Transformer model designed for edge deployment (IBM, 2025). Key properties for our use case:
+Granite 4.0 Micro is a 3B-parameter dense transformer model designed for edge deployment (IBM, 2025). Key properties for this use case:
 
-- **70% less memory** than comparable transformer-only models due to Mamba-2 linear attention layers
+- **Small footprint**: 3B parameters run comfortably on consumer hardware via llama.cpp quantization
 - **Native function calling** with structured JSON output. The agent loop is driven by Strands Agents SDK, which provides native tool-call lifecycle hooks (BeforeToolCallEvent, AfterToolCallEvent) for Chainlit UI integration and confirmation dialog interception.
 - **Multilingual**: English, Arabic, French, Spanish, Japanese, Korean, Chinese, and 5 other languages, which is critical for humanitarian contexts
 - **128K validated context** with 512K training length, sufficient for large policy documents and scan results
@@ -216,35 +216,35 @@ Integration: when the OneDrive scanner downloads a binary document format (PDF, 
                        OneDrive Outlook Slack
 ```
 
-## Challenges We Ran Into
+## Challenges I Ran Into
 
-**Slack OAuth v2 + Auth0 generic oauth2 strategy**: Slack's v2 OAuth uses `user_scope` as a separate parameter from `scope`, but Auth0's generic oauth2 connection strategy only sends `scope` in the authorization URL. We could not get write scopes (`chat:write`, `files:write`) through Token Vault regardless of the connection configuration.
+**Slack OAuth v2 + Auth0 generic oauth2 strategy**: Slack's v2 OAuth uses `user_scope` as a separate parameter from `scope`, but Auth0's generic oauth2 connection strategy only sends `scope` in the authorization URL. I could not get write scopes (`chat:write`, `files:write`) through Token Vault regardless of the connection configuration.
 
 Solution: separate read and write credentials. Token Vault handles read operations (scanning messages via user token). A separate Slack bot token handles write operations (posting data protection alerts). In practice, the separation is architecturally correct: data protection alerts should come from the bot identity, not impersonate the user.
 
-**Token rotation and cache staleness**: Slack's token rotation meant Token Vault would return revoked tokens after we invalidated them during debugging. The stored Connected Account had to be deleted via the Management API (`DELETE /api/v2/users/{id}/connected-accounts/{cac_id}`) and refresh tokens flushed (`DELETE /api/v2/users/{id}/refresh-tokens`) to force a full re-authentication.
+**Token rotation and cache staleness**: Slack's token rotation meant Token Vault would return revoked tokens after I invalidated them during debugging. The stored Connected Account had to be deleted via the Management API (`DELETE /api/v2/users/{id}/connected-accounts/{cac_id}`) and refresh tokens flushed (`DELETE /api/v2/users/{id}/refresh-tokens`) to force a full re-authentication.
 
-**BeeAI to Strands migration**: We initially used BeeAI Framework's `ReActAgent`, which implements text-based ReAct parsing where the model must output structured `Thought:` / `Action:` / `Observation:` lines. Granite via llama-server uses the OpenAI function-calling protocol (tool calls in the response message, not text prefixes). We ultimately migrated to Strands Agents SDK, which provides `BeforeToolCallEvent` hooks for confirmation dialog interception and Chainlit UI integration. The error message (`LinePrefixParserError: Nothing valid has been parsed yet!`) was clear once we understood the distinction.
+**BeeAI to Strands migration**: I initially used BeeAI Framework's `ReActAgent`, which implements text-based ReAct parsing where the model must output structured `Thought:` / `Action:` / `Observation:` lines. Granite via llama-server uses the OpenAI function-calling protocol (tool calls in the response message, not text prefixes). I migrated to Strands Agents SDK, which provides `BeforeToolCallEvent` hooks for confirmation dialog interception and Chainlit UI integration. The error message (`LinePrefixParserError: Nothing valid has been parsed yet!`) was clear once I understood the distinction.
 
-**Granite Micro and vague queries**: A 3B parameter model requires explicit tool-routing instructions. "Scan everything" would sometimes fail to call the right tools or call the wrong ones. We added explicit routing rules to the system prompt (`scan_files` for OneDrive, `search_messages` for Slack/Outlook) and query expansion for common shorthand ("check all my files" → detailed scan instruction).
+**Granite Micro and vague queries**: A 3B parameter model requires explicit tool-routing instructions. "Scan everything" would sometimes fail to call the right tools or call the wrong ones. I added explicit routing rules to the system prompt (`scan_files` for OneDrive, `search_messages` for Slack/Outlook) and query expansion for common shorthand ("check all my files" → detailed scan instruction).
 
-**PII detection for non-Latin scripts**: The initial regex pattern `\b[A-Z][a-z]+ [A-Z][a-z]+\b` catches English-style names but misses Arabic names (محمد), Bengali names (মোহাম্মদ), and Burmese names, the very populations humanitarian organizations serve. Research into the RECAP paper (2025) led us to implement the hybrid regex + LLM architecture, where the LLM handles multilingual and contextual PII that regex cannot express.
+**PII detection for non-Latin scripts**: The initial regex pattern `\b[A-Z][a-z]+ [A-Z][a-z]+\b` catches English-style names but misses Arabic names (محمد), Bengali names (মোহাম্মদ), and Burmese names, the very populations humanitarian organizations serve. Research into the RECAP paper (2025) led me to implement the hybrid regex + LLM architecture, where the LLM handles multilingual and contextual PII that regex cannot express.
 
-## Accomplishments That We're Proud Of
+## Accomplishments I'm Proud Of
 
 **The Rohingya scenario could have been prevented by this tool.** If UNHCR field staff had Amanat scanning their shared drives, it would have flagged the biometric enrollment data as publicly accessible special-category data, cited ICRC Handbook Chapter 8 and GDPR Article 9, and required explicit confirmation before any destructive remediation. The demo shows this with the Waqwaq scenario.
 
-**Fully local AI.** No beneficiary data ever touches a cloud LLM API. Granite 4 Micro runs on a laptop via llama-server. The entire stack (LLM, document parser, PII detector, policy database) is containerizable for offline field deployment. We built a Containerfile that proves it.
+**Fully local AI.** No beneficiary data ever touches a cloud LLM API. Granite 4 Micro runs on a laptop via llama-server. The entire stack (LLM, document parser, PII detector, policy database) is containerizable for offline field deployment. I built a Containerfile that proves it.
 
 **PII never reaches the LLM.** Tool results are redacted before being returned to the agent. Granite sees `[NAME REDACTED]` and `[CASE# REDACTED]`, never raw beneficiary data. The unredacted data is only shown in the Chainlit UI steps, visible to the authenticated user. A defense-in-depth measure against prompt injection and model memorization.
 
-**Real policy grounding.** We downloaded the actual ICRC Handbook (400+ pages), IASC Operational Guidance, GDPR full text, and Sphere Handbook as PDFs. Docling extracted 1,059 text chunks. BM25 retrieves the relevant sections at query time. The agent cites "ICRC Handbook Chapter 8.2.1" because it read Chapter 8.2.1, not because it hallucinated a citation.
+**Real policy grounding.** I downloaded the actual ICRC Handbook (400+ pages), IASC Operational Guidance, GDPR full text, and Sphere Handbook as PDFs. Docling extracted 1,059 text chunks. BM25 retrieves the relevant sections at query time. The agent cites "ICRC Handbook Chapter 8.2.1" because it read Chapter 8.2.1, not because it hallucinated a citation.
 
-**Research-backed PII detection.** The hybrid detection architecture is grounded in the RECAP paper (2025), which demonstrated that combining regex with LLM-based extraction outperforms either approach alone. Our implementation catches implicit identifiers like "the 15-year-old girl in Vakwa Shelter" that regex cannot detect.
+**Research-backed PII detection.** The hybrid detection architecture is grounded in the RECAP paper (2025), which demonstrated that combining regex with LLM-based extraction outperforms either approach alone. My implementation catches implicit identifiers like "the 15-year-old girl in Vakwa Shelter" that regex cannot detect.
 
-**49/50 agent queries pass.** Tested 50 diverse queries across 5 categories: scan (15/15), policy/RAG (10/10), compliance (8/8), remediation (6/7), edge cases (10/10). One failure from a context window overflow on a multi-file remediation. 43 unit tests pass.
+**49/50 agent queries pass.** I tested 50 diverse queries across 5 categories: scan (15/15), policy/RAG (10/10), compliance (8/8), remediation (6/7), edge cases (10/10). One failure from a context window overflow on a multi-file remediation. 43 unit tests pass.
 
-## What We Learned
+## What I Learned
 
 **Auth0 Token Vault is the right abstraction for multi-service AI agents.** The federated token exchange pattern (one authentication event, per-service scoped tokens, automatic refresh, user-controlled consent) maps directly to what an agentic system requires. Users connect and disconnect services individually. The agent never stores raw credentials. Token expiry is handled transparently. All AI agents should handle multi-service access this way.
 
@@ -310,6 +310,30 @@ An Evaluation Study of Hybrid Methods for Multilingual PII Detection. (2025). ht
 
 The New Humanitarian. (2021). Rohingya data protection and the UN's betrayal. https://www.thenewhumanitarian.org/opinion/2021/6/21/rohingya-data-protection-and-UN-betrayal
 
+---
+
+## Blog Post: Token Vault Is the Missing Auth Layer for AI Agents
+
+Every AI agent tutorial solves the same problem wrong. The agent needs to call three APIs on behalf of a user. So the developer stores three sets of OAuth tokens in a database, writes refresh logic for each provider, and hopes nothing expires at 2 AM.
+
+I built Amanat, a data governance agent that scans OneDrive, Slack, and Outlook for sensitive humanitarian data. The agent needs to read files from Microsoft Graph, search Slack messages, scan Outlook emails, and then take action: revoke sharing links, post alerts, send warning emails. That is three OAuth providers, five different scopes, and two token types (user tokens for reading, bot tokens for writing).
+
+Auth0 Token Vault solved the credential management problem I did not want to solve.
+
+**One authentication event, multiple services.** The user logs in once via Auth0 Universal Login. Then they connect each service individually through Connected Accounts. Each connection is a separate OAuth consent screen with its own scopes. The user sees exactly what they are granting. They can disconnect OneDrive without affecting Slack.
+
+**Federated token exchange instead of token storage.** When Amanat needs a Microsoft Graph token, it sends a single POST to Auth0's token endpoint with the user's refresh token and `connection=microsoft-graph`. Auth0 returns a scoped access token. Amanat never stores raw service credentials. If a token expires mid-scan, the exchange runs again transparently. The grant type (`urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`) is verbose, but it encapsulates the entire token lifecycle.
+
+**Per-service isolation.** This was the property I did not appreciate until I needed it. Early in development, I had a single `access_token` variable that I passed to every tool. The OneDrive token got sent to the Slack API. Slack returned `invalid_auth`. The fix was obvious once I saw it: Token Vault already scopes tokens per connection. I built a `_service_tokens` dictionary that maps `{"onedrive": "...", "slack": "...", "outlook": "..."}` and each tool picks its own token. The OneDrive token physically cannot touch the Slack API. For an agent handling refugee biometric data, that isolation is not a nice-to-have.
+
+**The My Account API pattern.** Token Vault uses a My Account API (`https://{domain}/me/`) with `read:connected_accounts` and `create:connected_account_tokens` scopes. The agent can check which services are connected before attempting a scan, and prompt the user to connect missing services. The MRRT (Multi-Resource Refresh Token) flow means one refresh token works across the My Account API and all connected services.
+
+**What I would tell another agent developer:** do not build token management yourself. The refresh logic, the expiry handling, the per-service scoping, the user consent UI, the disconnect flow, the token rotation, all of it is infrastructure that Token Vault handles and that you will get wrong if you implement it from scratch. I spent my time on PII detection and policy grounding instead of writing a token database. That was the right trade.
+
+The pattern generalizes beyond humanitarian data. Any AI agent that touches multiple services on behalf of a user (CRM + email + calendar, or cloud storage + messaging + analytics) faces the same multi-provider OAuth problem. Token Vault's federated exchange is the correct abstraction: one identity provider, per-service consent, scoped tokens, automatic refresh, user-controlled disconnect. Build your agent logic. Let Auth0 handle the credentials.
+
+---
+
 ## Built With
 
 - auth0-token-vault
@@ -324,4 +348,4 @@ The New Humanitarian. (2021). Rohingya data protection and the UN's betrayal. ht
 
 ## Try It Out
 
-- [GitHub Repo](https://github.com/msradam/auth0-hack)
+- [GitHub Repo](https://github.com/msradam/amanat)

@@ -390,6 +390,66 @@ async def oauth_callback(
 
 @cl.set_chat_profiles
 async def set_chat_profiles(current_user: cl.User | None = None):
+    if DEMO_TOOLS:
+        # Deployed demo: starters that work with synthetic data
+        return [
+            cl.ChatProfile(
+                name="Scan & Investigate",
+                markdown_description="Scan files, messages, and emails for data protection issues.",
+                icon="/public/icons/scan.svg",
+                starters=[
+                    cl.Starter(
+                        label="Scan files for PII exposure",
+                        message="Scan all files for sensitive data exposure, PII, oversharing, and policy violations.",
+                        icon="/public/icons/scan.svg",
+                    ),
+                    cl.Starter(
+                        label="Check messages for leaked data",
+                        message="Search messages for any content containing beneficiary names, case numbers, or medical information in public channels.",
+                        icon="/public/icons/message.svg",
+                    ),
+                    cl.Starter(
+                        label="Check data retention compliance",
+                        message="Which files have exceeded their data retention period? Flag any PII older than 12 months and special category data older than 6 months.",
+                        icon="/public/icons/policy.svg",
+                    ),
+                    cl.Starter(
+                        label="What is Amanat?",
+                        message="What can you help me with?",
+                        icon="/public/icons/shield.svg",
+                    ),
+                ],
+            ),
+            cl.ChatProfile(
+                name="Compliance",
+                markdown_description="Generate DPIAs, check consent, ask policy questions.",
+                icon="/public/icons/policy.svg",
+                starters=[
+                    cl.Starter(
+                        label="Generate a DPIA for biometric enrollment",
+                        message="We're starting a biometric enrollment program that collects fingerprints and iris scans for aid distribution. Generate a DPIA for this.",
+                        icon="/public/icons/policy.svg",
+                    ),
+                    cl.Starter(
+                        label="ICRC rules on data sharing",
+                        message="What does the ICRC Handbook say about sharing displaced person data with host governments? Do we need consent?",
+                        icon="/public/icons/policy.svg",
+                    ),
+                    cl.Starter(
+                        label="Check consent documentation",
+                        message="Check the consent documentation status for our displaced persons registry and biometric enrollment log. Are we compliant with ICRC requirements?",
+                        icon="/public/icons/policy.svg",
+                    ),
+                    cl.Starter(
+                        label="Rules for sharing data with donors",
+                        message="What are the rules for sharing displaced person data with donors like the Ambara Development Fund? What does GDPR say about this?",
+                        icon="/public/icons/policy.svg",
+                    ),
+                ],
+            ),
+        ]
+
+    # Live mode: full profiles with connect services and remediation
     return [
         cl.ChatProfile(
             name="Scan & Investigate",
