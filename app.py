@@ -5,9 +5,7 @@ Run with: chainlit run app.py
 """
 
 import base64
-import hashlib
 import json
-import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,8 +21,8 @@ from chainlit import User
 
 from amanat.tools.scanner import execute_tool
 from amanat.agent import (
-    SYSTEM_PROMPT, _build_system_prompt, create_agent,
-    set_access_token, REMEDIATION_TOOLS,
+    _build_system_prompt, create_agent,
+
 )
 from amanat.auth import Auth0TokenVault
 
@@ -1300,7 +1298,7 @@ def _friendly_step_name(fn_name: str, args: dict) -> str:
         "download_file": f"Downloading {args.get('file_id', 'file')} locally",
         "delete_file": f"Deleting {args.get('file_id', 'file')} from cloud",
         "redact_file": f"Redacting PII from {args.get('file_id', 'file')}",
-        "retention_scan": f"Scanning for retention violations",
+        "retention_scan": "Scanning for retention violations",
         "generate_dpia": f"Generating DPIA for {args.get('activity', 'activity')[:40]}",
         "check_consent": f"Checking consent for {args.get('file_id', 'file')}",
     }
