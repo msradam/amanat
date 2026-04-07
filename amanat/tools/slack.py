@@ -9,12 +9,11 @@ for binary formats (PDF, DOCX) and direct text decoding for plain text.
 """
 
 import json
-import tempfile
 from pathlib import Path
 
 import httpx
 
-from amanat.tools.scanner import detect_pii_in_text, redact_pii_in_text
+from amanat.tools.scanner import detect_pii_in_text
 from amanat.knowledge.rules import evaluate_message
 
 SLACK_BASE = "https://slack.com/api"
@@ -262,7 +261,7 @@ def search_slack_messages(access_token: str, query: str) -> str:
         affected_channels = list(set(r.get("channel", "") for r in results if r.get("violations")))
         lines.append("")
         lines.append(f"AFFECTED CHANNELS: {', '.join(affected_channels)}")
-        lines.append(f"Post alerts to each affected channel using: notify_channel(channel=\"CHANNEL_NAME\", pii_summary=\"...\", service=\"slack\")")
+        lines.append("Post alerts to each affected channel using: notify_channel(channel=\"CHANNEL_NAME\", pii_summary=\"...\", service=\"slack\")")
 
     lines.append("\n---JSON---")
     lines.append(json.dumps({
@@ -421,7 +420,7 @@ def scan_slack_channels(access_token: str) -> str:
         affected_channels = list(set(r.get("channel", "") for r in all_results if r.get("violations")))
         lines.append("")
         lines.append(f"AFFECTED CHANNELS: {', '.join(affected_channels)}")
-        lines.append(f"Post alerts to each affected channel using: notify_channel(channel=\"CHANNEL_NAME\", pii_summary=\"...\", service=\"slack\")")
+        lines.append("Post alerts to each affected channel using: notify_channel(channel=\"CHANNEL_NAME\", pii_summary=\"...\", service=\"slack\")")
 
     lines.append("\n---JSON---")
     lines.append(json.dumps({

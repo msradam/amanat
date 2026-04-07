@@ -8,7 +8,6 @@ synthetic demo data for development.
 
 import json
 import re
-from pathlib import Path
 
 from amanat.knowledge.rules import evaluate_file
 
@@ -1180,7 +1179,7 @@ def _check_consent(file_id: str, service: str) -> str:
 
         lines = [
             f"CONSENT CHECK: {name}",
-            f"Status: NO CONSENT RECORD FOUND",
+            "Status: NO CONSENT RECORD FOUND",
             f"Contains PII: {'Yes' if pii else 'No'}",
             "",
             "ISSUES:",
